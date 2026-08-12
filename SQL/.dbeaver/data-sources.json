@@ -1,0 +1,55 @@
+{
+	"folders": {},
+	"connections": {
+		"sqlite_jdbc-19ff1427acf-320150c61d2942c0": {
+			"provider": "sqlite",
+			"driver": "sqlite_jdbc",
+			"name": "LH_Nautical",
+			"save-password": true,
+			"configuration": {
+				"database": "C:\\Users\\Vivian_Rodrigues\\Practice\\Lighthouse\\SQL\\LH_Nautical",
+				"url": "jdbc:sqlite:C:\\Users\\Vivian_Rodrigues\\Practice\\Lighthouse\\SQL\\LH_Nautical",
+				"configurationType": "MANUAL",
+				"type": "dev",
+				"closeIdleConnection": true
+			}
+		},
+		"postgres-jdbc-19ff7018929-78086d5ce1595042": {
+			"provider": "postgresql",
+			"driver": "postgres-jdbc",
+			"name": "postgres",
+			"save-password": true,
+			"configuration": {
+				"host": "localhost",
+				"port": "5432",
+				"database": "postgres",
+				"url": "jdbc:postgresql://localhost:5432/postgres",
+				"configurationType": "MANUAL",
+				"home": "postgresql-x64-18",
+				"type": "dev",
+				"closeIdleConnection": true,
+				"provider-properties": {
+					"@dbeaver-show-non-default-db@": "true"
+				},
+				"auth-model": "native"
+			}
+		}
+	},
+	"connection-types": {
+		"dev": {
+			"name": "Desenvolvimento",
+			"color": "255,255,255",
+			"colorDark": "255,255,255",
+			"description": "Banco de dados de desenvolvimento",
+			"auto-commit": true,
+			"confirm-execute": false,
+			"confirm-data-change": false,
+			"smart-commit": false,
+			"smart-commit-recover": true,
+			"auto-close-transactions": true,
+			"close-transactions-period": 1800,
+			"auto-close-connections": true,
+			"close-connections-period": 14400
+		}
+	}
+}
