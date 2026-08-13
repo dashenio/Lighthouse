@@ -7,6 +7,7 @@ import time
 def carregar_dados(diretorio_csv):
 
     # Conexão com o Postgres
+    # É preciso criar o banco de dados antes
     engine = al.create_engine('postgresql://postgres:root@localhost:5432/lh_nautical')
 
     schema_path = Path("schema.sql")
