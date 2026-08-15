@@ -3,17 +3,39 @@ from datetime import datetime
 from pathlib import Path
 
 
-def tipo_postgres(valor: str) -> str:
-    # Infere o tipo do Postgres
-    
+def tipo_postgres(col_nome, valor):
     valor = valor.strip()
 
     if not valor:
         return "UNKNOWN"
 
+    # Força qualquer identificador longo a ser VARCHAR
+    col_lower = col_nome.lower()
+    if any(
+        chave in col_lower
+        for chave in [
+            "phone",
+            "tax_id",
+            "cpf",
+            "cnpj",
+            "registration",
+            "postal",
+            "key",          
+            "access",       
+            "code",
+            "barcode",
+        ]
+    ):
+        return "VARCHAR"
+
     # 1 - Checa Inteiro
     try:
-        int(valor)
+        val_int = int(valor)
+        if abs(val_int) > 2147483647:
+            # Se exceder o limite de BIGINT (19 dígitos), vai direto para VARCHAR
+            if abs(val_int) > 9223372036854775807:
+                return "VARCHAR"
+            return "BIGINT"
         return "INTEGER"
     except ValueError:
         pass
@@ -25,9 +47,10 @@ def tipo_postgres(valor: str) -> str:
     except ValueError:
         pass
 
-    # 3 -  Checa Timestamp/Data
+    # 3 - Checa Timestamp/Data 
     formatos_data = [
         "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%d",
         "%d/%m/%Y %H:%M:%S",
         "%d/%m/%Y",
@@ -42,7 +65,7 @@ def tipo_postgres(valor: str) -> str:
             pass
 
     # 4 - Checa Boolean
-    if valor.lower() in ("true", "false", "t", "f", "1", "0"):
+    if valor.lower() in ("true", "false", "t", "f"):
         return "BOOLEAN"
 
     # Padrão
@@ -59,10 +82,11 @@ def csv_para_schema_postgres(
         "UNKNOWN": 0,
         "BOOLEAN": 1,
         "INTEGER": 2,
-        "NUMERIC": 3,
-        "DATE": 4,
-        "TIMESTAMP": 5,
-        "VARCHAR": 6,
+        "BIGINT": 3,
+        "NUMERIC": 4,
+        "DATE": 5,
+        "TIMESTAMP": 6,
+        "VARCHAR": 7,
     }
 
     for caminho_csv in pasta.glob("*.csv"):
@@ -83,7 +107,7 @@ def csv_para_schema_postgres(
                     break
 
                 for col_nome, valor in zip(colunas, linha):
-                    tipo_detectado = tipo_postgres(valor)
+                    tipo_detectado = tipo_postgres(col_nome, valor)
 
                     if (
                         prioridade[tipo_detectado]

@@ -28,20 +28,19 @@ FROM orders;
 /* Parte 2 - Análise de valores numéricos
 Para a coluna "total", calcule: */
 
+-- Valores calculados filtrando por status 'pago' (exluindo cancelled, draft e confirmed)
 -- Valor mínimo - R$ 32,62
-SELECT 
-	MIN(total)
-FROM orders;	
-
 -- Valor máximo - R$ 127.262,02
+-- Valor médio - R$ 28.684,45
 SELECT 
-	MAX(total)
-FROM orders;
+	status,
+	MIN(total) AS valor_minimo,
+	MAX(total) AS valor_maximo,
+	ROUND(CAST(AVG(total) AS decimal), 2) ticket_medio
+FROM orders
+	WHERE status = 'paid'
+GROUP BY status;	
 
--- Valor médio - R$ 28.704,99
-SELECT 
-	ROUND(CAST(AVG(total) AS decimal), 2)
-FROM orders;
 
 /* Parte 3 - Interpretação
 Responda de forma resumida:
@@ -78,7 +77,8 @@ LIMIT 10;
 
 -- Parece que o não preenchimento do id de vendedor se dá pelo meio de venda (ecommerce)
 SELECT COUNT(*) AS vendedor_vazio FROM orders
-WHERE salesperson_id IS NULL
+WHERE salesperson_id IS NULL;
+
 
 SELECT COUNT(*) AS vendedor_vazio_ecommerce 
 FROM orders
@@ -102,12 +102,13 @@ WHERE placed_at = updated_at;
 
 --  PROCURAR OUTLIERS
 
--- Outliers por dia
+-- 1. Outliers por dia (apenas pedidos pagos)
 WITH estatisticas AS (
     SELECT 
         percentile_cont(0.25) WITHIN GROUP (ORDER BY total) AS q1,
         percentile_cont(0.75) WITHIN GROUP (ORDER BY total) AS q3
     FROM orders
+    WHERE status = 'paid' -- Filtro aplicado na base do cálculo do IQR
 ),
 limites AS (
     SELECT 
@@ -124,16 +125,19 @@ SELECT
     MAX(o.total) AS maior_outlier_do_dia
 FROM orders o
 CROSS JOIN limites l
-WHERE o.total > l.limite_superior OR o.total < l.limite_inferior
+WHERE o.status = 'paid' 
+  AND (o.total > l.limite_superior OR o.total < l.limite_inferior) -- Filtro de status movido para o WHERE
 GROUP BY DATE(o.created_at)
 ORDER BY data_pedido ASC;
 
--- Outliers por mês
+
+-- 2. Outliers por mês (apenas pedidos pagos)
 WITH estatisticas AS (
     SELECT 
         percentile_cont(0.25) WITHIN GROUP (ORDER BY total) AS q1,
         percentile_cont(0.75) WITHIN GROUP (ORDER BY total) AS q3
     FROM orders
+    WHERE status = 'paid'
 ),
 limites AS (
     SELECT 
@@ -150,16 +154,19 @@ SELECT
     MAX(o.total) AS maior_outlier_do_mes
 FROM orders o
 CROSS JOIN limites l
-WHERE o.total > l.limite_superior OR o.total < l.limite_inferior
+WHERE o.status = 'paid'
+  AND (o.total > l.limite_superior OR o.total < l.limite_inferior)
 GROUP BY TO_CHAR(o.created_at::timestamp, 'YYYY-MM')
 ORDER BY ano_mes ASC;
 
--- Total de Outliers
+
+-- 3. Total de Outliers + Porcentagem em relação aos pedidos PAGOS
 WITH estatisticas AS (
     SELECT 
         percentile_cont(0.25) WITHIN GROUP (ORDER BY total) AS q1,
         percentile_cont(0.75) WITHIN GROUP (ORDER BY total) AS q3
     FROM orders
+    WHERE status = 'paid'
 ),
 limites AS (
     SELECT 
@@ -169,10 +176,11 @@ limites AS (
 )
 SELECT 
     COUNT(*) AS total_outliers,
-    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM orders), 2) AS porcentagem_total_de_pedidos
+    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM orders WHERE status = 'paid'), 2) AS porcentagem_total_de_pedidos_pagos
 FROM orders o
 CROSS JOIN limites l
-WHERE o.total > l.limite_superior OR o.total < l.limite_inferior;
+WHERE o.status = 'paid'
+  AND (o.total > l.limite_superior OR o.total < l.limite_inferior);
 
 
 

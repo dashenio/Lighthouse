@@ -1,4 +1,6 @@
+
 -- ######### QUESTAO 4 - ANÁLISE DE CLIENTES #########
+
 
 /*  - Faturamento Total: Soma da coluna total por cliente.
 	- Frequência: Contagem total de transações (IDs de venda) por cliente.
@@ -9,28 +11,41 @@
 	- Filtre os 10 clientes com o maior Ticket Médio que atendam ao critério de diversidade (13 ou + categorias).
 	- Para este grupo específico de 10 clientes, identifique qual categoria de produto concentra a maior quantidade total de itens comprados (sum(quantity)).*/
 
-WITH clientes_elite AS (
-    Calculo de Métricas, Diversidade e Top 10 Clientes
+WITH diversidade_cliente AS (
+    -- Ediversidade de categorias únicas por cliente (apenas pedidos pagos)
     SELECT 
         o.customer_id,
-        COUNT(DISTINCT o.id) AS frequencia,
-        SUM(o.total) AS faturamento_total,
-        (SUM(o.total) / NULLIF(COUNT(DISTINCT o.id), 0)) AS ticket_medio,
         COUNT(DISTINCT p.category_id) AS diversidade_categorias
     FROM orders o
     INNER JOIN order_items oi ON o.id = oi.order_id
     INNER JOIN product_variants pv ON oi.product_variant_id = pv.id
     INNER JOIN products p ON p.id = pv.product_id
+    WHERE o.status = 'paid'
     GROUP BY o.customer_id
     HAVING COUNT(DISTINCT p.category_id) >= 13
+),
+clientes_elite AS (
+    -- dados exatos de faturamento e frequência direto da tabela orders
+    SELECT 
+        o.customer_id,
+        COUNT(DISTINCT o.id) AS frequencia,
+        SUM(o.total) AS faturamento_total,
+        ROUND((SUM(o.total)::numeric / COUNT(DISTINCT o.id)), 2) AS ticket_medio,
+        dc.diversidade_categorias
+    FROM orders o
+    INNER JOIN diversidade_cliente dc ON o.customer_id = dc.customer_id
+    WHERE o.status = 'paid'
+    GROUP BY 
+        o.customer_id, 
+        dc.diversidade_categorias
     ORDER BY 
         ticket_medio DESC, 
         o.customer_id ASC
     LIMIT 10
 )
--- Categoria mais vendida no top 10
+-- identifica a categoria com maior volume de itens (sum(quantity)) dos melhores clientes
 SELECT 
-    cat.id AS category_id,
+    p.category_id,
     cat.name AS nome_categoria,
     SUM(oi.quantity) AS total_itens_comprados
 FROM clientes_elite ce
@@ -39,8 +54,9 @@ INNER JOIN order_items oi ON o.id = oi.order_id
 INNER JOIN product_variants pv ON oi.product_variant_id = pv.id
 INNER JOIN products p ON p.id = pv.product_id
 INNER JOIN categories cat ON cat.id = p.category_id
+WHERE o.status = 'paid'
 GROUP BY 
-    cat.id, 
+    p.category_id, 
     cat.name
 ORDER BY 
     total_itens_comprados DESC

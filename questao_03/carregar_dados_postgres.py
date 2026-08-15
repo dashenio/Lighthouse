@@ -2,11 +2,11 @@ import pandas as pd
 from pathlib import Path
 import sqlalchemy as al
 
-def carregar_dados(diretorio_csv):
+def carregar_dados(diretorio_csv): # argumento é a string do caminho
 
     # Conexão com o Postgres
     # É preciso criar o banco de dados antes
-    engine = al.create_engine('postgresql://postgres:root@localhost:5432/lh_nautical')
+    engine = al.create_engine('postgresql://postgres:root@localhost:5432/teste')
 
     schema_path = Path("schema.sql")
     sql_script = schema_path.read_text(encoding='utf-8')
@@ -28,9 +28,9 @@ def carregar_dados(diretorio_csv):
         # pd.read_csv com chunksize, trabalha com pedaços em vez de tentar inserir tudo de uma vez
          for chunk in pd.read_csv(caminho_csv, chunksize=10000, dtype=str):
              chunk.to_sql(
-                name=nome_tabela,      # Nome da tabela no PostgreSQL
+                name=nome_tabela,      
                 con=engine,
-                if_exists='append',    # Insere nas tabelas já criadas pelo schema.sql
+                if_exists='append',    
                 index=False
              )
     print('Arquivos carregados com sucesso.')

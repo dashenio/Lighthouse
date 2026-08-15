@@ -43,8 +43,9 @@ vendas_diarias AS (
         COALESCE(SUM(o.total), 0) AS total_dia
     FROM dimensao_calendario c
     LEFT JOIN orders o
-        ON o.created_at::DATE = c.date_id
-       AND o.channel = 'pos'
+		ON o.created_at::DATE = c.date_id
+       	AND o.channel = 'pos'
+       	AND o.status = 'paid'
     GROUP BY
         c.date_id
 )
@@ -59,30 +60,6 @@ GROUP BY
     numero_dia_semana,
     dia_semana
 ORDER BY
-    media_vendas DESC;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    media_vendas ASC;
 
 
