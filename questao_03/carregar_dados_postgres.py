@@ -6,7 +6,7 @@ def carregar_dados(diretorio_csv): # argumento é a string do caminho
 
     # Conexão com o Postgres
     # É preciso criar o banco de dados antes
-    engine = al.create_engine('postgresql://postgres:root@localhost:5432/teste')
+    engine = al.create_engine('postgresql://postgres:root@localhost:5432/lh_nautical')
 
     schema_path = Path("schema.sql")
     sql_script = schema_path.read_text(encoding='utf-8')
